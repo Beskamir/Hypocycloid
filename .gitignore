@@ -1,0 +1,16 @@
+# Ignore the vs config files
+.vs/*
+
+# Ignore all the build folders except for any dlls
+!Win32/Release
+!Win32/Debug
+Win32/Release/*
+Win32/Debug/*
+!Win32/Release/*.dll
+!Win32/Debug/*.dll
+!x64/Release
+!x64/Debug
+x64/Release/*
+x64/Debug/*
+!x64/Release/*.dll
+!x64/Debug/*.dll
