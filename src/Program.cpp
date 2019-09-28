@@ -127,7 +127,9 @@ void Program::drawUI() {
 			step = 100;
 			circleDetail = 100;
 			parametersChanged = true;
-			hideCircle = false;
+			hideInnerCircle = false;
+			hideOuterCircle = false;
+			hideDot = false;
 
 			theta = 0;
 			thetaCi = 0;
@@ -138,8 +140,15 @@ void Program::drawUI() {
 		if (circleDetail < 1) {
 			circleDetail = 1;
 		}
-		ImGui::Checkbox("hide circle", (bool*)&hideCircle);
+		ImGui::Checkbox("hide inner circle", (bool*)&hideInnerCircle);
 
+		ImGui::SameLine();
+
+		ImGui::Checkbox("hide outer circle", (bool*)&hideOuterCircle);
+
+		ImGui::SameLine();
+
+		ImGui::Checkbox("hide leading dot", (bool*)&hideDot);
 
 	
 
@@ -198,13 +207,10 @@ void Program::createOuterCircle() {
 
 
 void Program::updateInnerCircle() {
-	if (hideCircle) {
-		innerCircle->verts.clear();
+	innerCircle->verts.clear();
+	
+	if (hideInnerCircle) {
 		return;
-	}
-	if (parametersChanged) {
-		innerCircle->verts.clear();
-		// parametersChanged = false;
 	}
 
 	// draw the hypocycloid
@@ -214,8 +220,8 @@ void Program::updateInnerCircle() {
 			thetaCi = 0;
 		}
 		innerCircle->verts.push_back(glm::vec3(
-			innerRadius*(cos(thetaCi)),
-			innerRadius*(sin(thetaCi)),
+			innerRadius*(cos(thetaCi)) + (outerRadius - innerRadius) * cos(theta),
+			innerRadius*(sin(thetaCi)) + (outerRadius - innerRadius) * sin(theta),
 			0.f));
 	}
 
@@ -227,7 +233,7 @@ void Program::updateInnerCircle() {
 }
 
 void Program::updateOuterCircle() {
-	if (hideCircle) {
+	if (hideOuterCircle) {
 		outerCircle->verts.clear();
 		return;
 	}
@@ -255,9 +261,31 @@ void Program::updateOuterCircle() {
 	renderEngine->updateBuffers(*outerCircle);
 }
 
-void Program::drawLastPoint()
-{
-	
+void Program::createLastPoint() {
+	lastPoint = new Geometry;
+	lastPoint->drawMode = GL_POINTS;
+	renderEngine->assignBuffers(*lastPoint);
+	updateLastPoint();
+	geometryObjects.push_back(lastPoint);
+}
+
+void Program::updateLastPoint() {
+	lastPoint->verts.clear();
+	if(hideDot)	{
+		return;
+	}
+	float radiusDif = (outerRadius - innerRadius);
+	float ratio = ((radiusDif / innerRadius) / innerRadius) * theta;
+	lastPoint->verts.push_back(glm::vec3(
+		(radiusDif*cos(theta) + innerRadius * cos(ratio)),
+		(radiusDif*sin(theta) - innerRadius * sin(ratio)),
+		0.f));
+
+	// scale or rotate the hypocycloid
+	lastPoint->modelMatrix = glm::scale(glm::mat4(1.f), glm::vec3(scale));
+	lastPoint->modelMatrix *= glm::rotate(glm::mat4(1.f), glm::radians(rotation), glm::vec3(0, 0, 1.0f));
+
+	renderEngine->updateBuffers(*lastPoint);
 }
 
 // Main loop
@@ -268,6 +296,7 @@ void Program::mainLoop() {
 
 	createOuterCircle();
 	createInnerCircle();
+	createLastPoint();
 
 	// Our state
 	show_test_window = false;
@@ -279,6 +308,7 @@ void Program::mainLoop() {
 		updateCycloid();
 		updateInnerCircle();
 		updateOuterCircle();
+		updateLastPoint();
 		if(parametersChanged){
 			parametersChanged = false;
 		}

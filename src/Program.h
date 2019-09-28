@@ -36,15 +36,20 @@ private:
 
 	void createTestGeometryObject();
 
+	// draw the cycloid 
 	void createCycloid();
 	void updateCycloid();
 
+	// draw the circles
 	void createInnerCircle();
 	void createOuterCircle();
 	void updateInnerCircle();
 	void updateOuterCircle();
 
-	void drawLastPoint();
+	// draw a dot on the last point
+	void createLastPoint();
+	void updateLastPoint();
+
 	// PI constant since I'm too lazy to use a library when I can just copy paste
 	float PI = 3.14159265358979323846264338327950288;
 	
@@ -57,7 +62,9 @@ private:
 	int amount = 1;
 	int step = 100;
 	int circleDetail = 100;
-	bool hideCircle = false;
+	bool hideInnerCircle = false;
+	bool hideOuterCircle = false;
+	bool hideDot = false;
 
 	float theta = 0;
 	float thetaCi = 0;
@@ -69,4 +76,5 @@ private:
 	Geometry* hypocycloid;
 	Geometry* innerCircle;
 	Geometry* outerCircle;
+	Geometry* lastPoint;
 };
