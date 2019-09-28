@@ -35,4 +35,38 @@ private:
 	void drawUI();
 
 	void createTestGeometryObject();
+
+	void createCycloid();
+	void updateCycloid();
+
+	void createInnerCircle();
+	void createOuterCircle();
+	void updateInnerCircle();
+	void updateOuterCircle();
+
+	void drawLastPoint();
+	// PI constant since I'm too lazy to use a library when I can just copy paste
+	float PI = 3.14159265358979323846264338327950288;
+	
+	// Class variables for controlling the hypocycloid.
+	float outerRadius = 4;
+	float innerRadius = 1;
+	int cycles = 1;
+	float rotation = 0;
+	float scale = 1;
+	int amount = 1;
+	int step = 100;
+	int circleDetail = 100;
+	bool hideCircle = false;
+
+	float theta = 0;
+	float thetaCi = 0;
+	float thetaCo = 0;
+
+	bool parametersChanged = true;
+
+	// Class variable for the hypocycloid
+	Geometry* hypocycloid;
+	Geometry* innerCircle;
+	Geometry* outerCircle;
 };

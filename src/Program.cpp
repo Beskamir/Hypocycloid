@@ -39,7 +39,7 @@ void Program::setupWindow() {
 	}
 
 	glfwWindowHint(GLFW_SAMPLES, 16);
-	window = glfwCreateWindow(1024, 1024, "CPSC 589 A1", NULL, NULL);
+	window = glfwCreateWindow(1024, 1024, "CPSC 589 A1 - hypocycloids", NULL, NULL);
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(1); // V-sync on
 
@@ -79,53 +79,209 @@ void Program::createTestGeometryObject() {
 	geometryObjects.push_back(testObject);
 }
 
+
 void Program::drawUI() {
-	// Start the Dear ImGui frame
+	// Start ImGui frame
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
-	// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+	// Setup all the buttons for ImGui interaction
 	{
-		static int counter = 0;
+		ImGui::Begin("UI Controls");
+		ImGui::ColorEdit3("clear color", (float*)&clear_color);
+		ImGui::DragFloat("small circle radius", (float*)&innerRadius, 0.001f);
+		ImGui::DragFloat("large circle radius", (float*)&outerRadius, 0.001f);
+		ImGui::DragInt("number of cycles", (int*)&cycles);
+		if (cycles < 1) {
+			cycles = 1;
+		}
+		
+		ImGui::DragFloat("rotation", (float*)&rotation, 0.1f);
+		ImGui::DragFloat("scale factor", (float*)&scale, 0.001f);
+		ImGui::DragInt("hypocycloid resolution", (int*)&step, 1);
+		if (step < 1) {
+			step = 1;
+		}
+		ImGui::DragInt("draws before updating", (int*)&amount, 1);
+		if(amount<0) {
+			amount = 0;
+		}
 
-		ImGui::Begin("UI Controls");                          // Create a window called "Hello, world!" and append into it.
+		if (ImGui::Button("refresh")) {
+			parametersChanged = true;
+			theta = 0;
+			thetaCi = 0;
+			thetaCo = 0;
+		}
 
-		// ImGui::Text("This will control stuff");               // Display some text (you can use a format strings too)
-		// ImGui::Checkbox("Test Window", &show_test_window);      // Edit bools storing our window open/close state
+		ImGui::SameLine();
 
-		ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+		if (ImGui::Button("reset to defaults")) {
+			outerRadius = 4;
+			innerRadius = 1;
+			cycles = 1;
+			rotation = 0;
+			scale = 1;
+			amount = 1;
+			step = 100;
+			circleDetail = 100;
+			parametersChanged = true;
+			hideCircle = false;
 
-		// if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-		// 	counter++;
-		// ImGui::SameLine();
-		// ImGui::Text("counter = %d", counter);
+			theta = 0;
+			thetaCi = 0;
+			thetaCo = 0;
+		}
+
+		ImGui::DragInt("circle resolutions", (int*)&circleDetail, 1);
+		if (circleDetail < 1) {
+			circleDetail = 1;
+		}
+		ImGui::Checkbox("hide circle", (bool*)&hideCircle);
+
+
+	
 
 		ImGui::End();
 	}
+}
 
-	// 3. Show another simple window.
-	// if (show_test_window)
-	// {
-	// 	ImGui::Begin("Another Window", &show_test_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-	// 	ImGui::Text("This is an example popup window.");
-	// 	if (ImGui::Button("Close Me"))
-	// 		show_test_window = false;
-	// 	ImGui::End();
-	// }
+void Program::createCycloid() {
+	hypocycloid = new Geometry;
+	renderEngine->assignBuffers(*hypocycloid);
+	updateCycloid();
+	geometryObjects.push_back(hypocycloid);
+}
+
+void Program::updateCycloid() {
+	if(parametersChanged){
+		hypocycloid->verts.clear();
+		// parametersChanged = false;
+	}
+
+	// draw the hypocycloid
+	for (int x = 0; x < amount; x++){
+		theta += (float) 1 / (float) step;
+		if (theta > (PI * 2 * cycles)) {
+			theta = 0;
+		}
+		float radiusDif = (outerRadius - innerRadius);
+		float ratio = ((radiusDif / innerRadius) / innerRadius) * theta;
+		hypocycloid->verts.push_back(glm::vec3(
+			(radiusDif*cos(theta) + innerRadius * cos(ratio)),
+			(radiusDif*sin(theta) - innerRadius * sin(ratio)),
+			0.f));
+	}
+
+	// scale or rotate the hypocycloid
+	hypocycloid->modelMatrix = glm::scale(glm::mat4(1.f), glm::vec3(scale));
+	hypocycloid->modelMatrix *= glm::rotate(glm::mat4(1.f), glm::radians(rotation), glm::vec3(0, 0, 1.0f));
+
+	renderEngine->updateBuffers(*hypocycloid);
+}
+
+void Program::createInnerCircle(){
+	innerCircle = new Geometry;
+	renderEngine->assignBuffers(*innerCircle);
+	updateInnerCircle();
+	geometryObjects.push_back(innerCircle);
+}
+
+void Program::createOuterCircle() {
+	outerCircle = new Geometry;
+	renderEngine->assignBuffers(*outerCircle);
+	updateOuterCircle();
+	geometryObjects.push_back(outerCircle);
+}
+
+
+
+void Program::updateInnerCircle() {
+	if (hideCircle) {
+		innerCircle->verts.clear();
+		return;
+	}
+	if (parametersChanged) {
+		innerCircle->verts.clear();
+		// parametersChanged = false;
+	}
+
+	// draw the hypocycloid
+	for (int x = 0; x < (PI * 2 * circleDetail) + 1; x++) {
+		thetaCi += (float) 1 / (float) circleDetail;
+		if (thetaCi > (PI * 2)) {
+			thetaCi = 0;
+		}
+		innerCircle->verts.push_back(glm::vec3(
+			innerRadius*(cos(thetaCi)),
+			innerRadius*(sin(thetaCi)),
+			0.f));
+	}
+
+	// scale or rotate the hypocycloid
+	innerCircle->modelMatrix = glm::scale(glm::mat4(1.f), glm::vec3(scale));
+	innerCircle->modelMatrix *= glm::rotate(glm::mat4(1.f), glm::radians(rotation), glm::vec3(0, 0, 1.0f));
+
+	renderEngine->updateBuffers(*innerCircle);
+}
+
+void Program::updateOuterCircle() {
+	if (hideCircle) {
+		outerCircle->verts.clear();
+		return;
+	}
+	if (parametersChanged) {
+		outerCircle->verts.clear();
+		// parametersChanged = false;
+	}
+
+	// draw the hypocycloid
+	for (int x = 0; x < (PI * 2 * circleDetail) + 1; x++) {
+		thetaCo += (float) 1 / (float) circleDetail;
+		if (thetaCo > (PI * 2)) {
+			thetaCo = 0;
+		}
+		outerCircle->verts.push_back(glm::vec3(
+			outerRadius*(cos(thetaCo)),
+			outerRadius*(sin(thetaCo)),
+			0.f));
+	}
+
+	// scale or rotate the hypocycloid
+	outerCircle->modelMatrix = glm::scale(glm::mat4(1.f), glm::vec3(scale));
+	outerCircle->modelMatrix *= glm::rotate(glm::mat4(1.f), glm::radians(rotation), glm::vec3(0, 0, 1.0f));
+
+	renderEngine->updateBuffers(*outerCircle);
+}
+
+void Program::drawLastPoint()
+{
+	
 }
 
 // Main loop
 void Program::mainLoop() {
 
-	createTestGeometryObject();
+	// createTestGeometryObject();
+	createCycloid();
+
+	createOuterCircle();
+	createInnerCircle();
 
 	// Our state
 	show_test_window = false;
-	clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+	clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
 
 	while(!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
+
+		updateCycloid();
+		updateInnerCircle();
+		updateOuterCircle();
+		if(parametersChanged){
+			parametersChanged = false;
+		}
 
 		drawUI();
 
