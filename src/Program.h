@@ -91,4 +91,6 @@ private:
 
 	float polynomialScale = 1;
 	bool applyPolynomialScale;
+
+	float offset[2] = { 0, 0 };
 };

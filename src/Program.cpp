@@ -1,5 +1,7 @@
 #include "Program.h"
 
+// float Program::offset[] = { 0,0 };
+
 Program::Program() {
 	window = nullptr;
 	renderEngine = nullptr;
@@ -135,6 +137,9 @@ void Program::drawUI() {
 			hideOuterCircle = false;
 			hideDot = false;
 			enablePoints = false;
+			offset[0] = 0;
+			offset[1] = 0;
+
 
 			theta = 0;
 			thetaCi = 0;
@@ -166,8 +171,13 @@ void Program::drawUI() {
 		ImGui::SameLine();
 
 		ImGui::Checkbox("enable placing control points", (bool*)&enablePoints);
+		if(enablePoints) {
+			mousePosition->z = 0;
+		}
 
 		ImGui::DragFloat("polynomial point scale factor", (float*)&polynomialScale, 0.001f);
+
+		ImGui::DragFloat2("translate the model", (float*)&offset, 0.01f);
 
 		ImGui::End();
 	}
@@ -202,6 +212,7 @@ void Program::updateCycloid() {
 	// scale or rotate the hypocycloid
 	hypocycloid->modelMatrix = glm::scale(glm::mat4(1.f), glm::vec3(scale));
 	hypocycloid->modelMatrix *= glm::rotate(glm::mat4(1.f), glm::radians(rotation), glm::vec3(0, 0, 1.0f));
+	hypocycloid->modelMatrix += glm::translate(glm::mat4(1.f), glm::vec3(offset[0], offset[1], 0.0f));
 
 	renderEngine->updateBuffers(*hypocycloid);
 }
@@ -244,6 +255,7 @@ void Program::updateInnerCircle() {
 	// scale or rotate the inner circle
 	innerCircle->modelMatrix = glm::scale(glm::mat4(1.f), glm::vec3(scale));
 	innerCircle->modelMatrix *= glm::rotate(glm::mat4(1.f), glm::radians(rotation), glm::vec3(0, 0, 1.0f));
+	innerCircle->modelMatrix += glm::translate(glm::mat4(1.f), glm::vec3(offset[0], offset[1], 0.0f));
 
 	renderEngine->updateBuffers(*innerCircle);
 }
@@ -272,6 +284,7 @@ void Program::updateOuterCircle() {
 	// scale or rotate the outer circle
 	outerCircle->modelMatrix = glm::scale(glm::mat4(1.f), glm::vec3(scale));
 	outerCircle->modelMatrix *= glm::rotate(glm::mat4(1.f), glm::radians(rotation), glm::vec3(0, 0, 1.0f));
+	outerCircle->modelMatrix += glm::translate(glm::mat4(1.f), glm::vec3(offset[0], offset[1], 0.0f));
 
 	renderEngine->updateBuffers(*outerCircle);
 }
@@ -299,6 +312,7 @@ void Program::updateLastPoint() {
 	// scale or rotate the line indicator point with everything else
 	lastPoint->modelMatrix = glm::scale(glm::mat4(1.f), glm::vec3(scale));
 	lastPoint->modelMatrix *= glm::rotate(glm::mat4(1.f), glm::radians(rotation), glm::vec3(0, 0, 1.0f));
+	lastPoint->modelMatrix += glm::translate(glm::mat4(1.f), glm::vec3(offset[0], offset[1], 0.0f));
 
 	renderEngine->updateBuffers(*lastPoint);
 }
@@ -350,8 +364,8 @@ void Program::updatePolynomialPoints(){
 	if(mousePosition->z==1 && pointCounter<3 && enablePoints){
 		glfwGetWindowSize(window, &width, &height);
 		glm::vec2 mousePosFix = glm::vec2(
-			((mousePosition->x - (float)width/2)/((float)width/2))*10,
-			(((float)height/2 - mousePosition->y)/((float)height/2))*10
+			((mousePosition->x - (float)width/2)/((float)width/2)) * 10 * (float)width / (float)height,
+			(((float)height/2 - mousePosition->y)/((float)height/2)) * 10
 		);
 		// std::cout << mousePosFix.x << "," << mousePosFix.y << std::endl;
 
@@ -368,9 +382,12 @@ void Program::updatePolynomialPoints(){
 	if (pointCounter > 2 && applyPolynomialScale) {
 		for (int i = 0; i < pointCounter; i++) {
 			polynomialPoints->verts[i] *= polynomialScale;
+			polynomialPoints->verts[i] += glm::vec3(offset[0], offset[1], 0.0f);
 			// std::cout << polynomialPoints->verts[i][0] << ", " << polynomialPoints->verts[i][1] << ", "<<i << std::endl;
 		}
 		polynomialScale = 1;
+		offset[0] = 0;
+		offset[1] = 0;
 		applyPolynomialScale = false;
 	}
 
