@@ -15,6 +15,6 @@ out vec4 fragColor;
 void main(void) {
 	// OutVertex.mColor = vec4(1.0f, 0.f, 0.f, 1.0f);
 	float vNormal = sqrt(vertex.x*vertex.x + vertex.y*vertex.y);
-    fragColor = glm::vec4(color.x * color.w + (1-color.w) * ((-vertex.x - vertex.y)/(vNormal)) , color.y * color.w + (1-color.w) * (vertex.x/vNormal), color.z * color.w + (1-color.w) * (vertex.y/vNormal), color.w);
+    fragColor = vec4(color.x * color.w + (1-color.w) * (-vertex.x - vertex.y)/vNormal , color.y * color.w + (1-color.w) * vertex.x/vNormal, color.z * color.w + (1-color.w) * vertex.y/vNormal, color.w);
 	gl_Position = ortho * modelView * vec4(vertex, 1.0f);   
 }

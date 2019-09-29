@@ -44,7 +44,7 @@ void Program::setupWindow() {
 	}
 
 	glfwWindowHint(GLFW_SAMPLES, 16);
-	window = glfwCreateWindow(1024, 1024, "CPSC 589 A1 - hypocycloids & polynomial curve", NULL, NULL);
+	window = glfwCreateWindow(1920, 1080, "CPSC 589 A1 - hypocycloids & polynomial curve", NULL, NULL);
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(1); // V-sync on
 
@@ -94,6 +94,10 @@ void Program::drawUI() {
 	// Setup all the buttons for ImGui interaction
 	{
 		ImGui::Begin("UI Controls");
+
+		float fontSize = 1.75f;
+		ImGui::SetWindowFontScale(fontSize);
+
 		ImGui::ColorEdit3("clear color", (float*)&clear_color);
 		ImGui::ColorEdit4("line color", (float*)&lineColor);
 		ImGui::DragFloat("small circle radius", (float*)&innerRadius, 0.001f);
@@ -147,6 +151,14 @@ void Program::drawUI() {
 			thetaCo = 0;
 		}
 
+		ImGui::SameLine();
+
+		ImGui::Checkbox("pause animation", (bool*)&pauseAnimation);
+
+		ImGui::SameLine();
+
+		ImGui::Checkbox("view hypocycloid", (bool*)&viewHypocycloid);
+
 		ImGui::DragInt("circle resolutions", (int*)&circleDetail, 1);
 		if (circleDetail < 1) {
 			circleDetail = 1;
@@ -161,15 +173,9 @@ void Program::drawUI() {
 
 		ImGui::Checkbox("hide leading dot", (bool*)&hideDot);
 
-		ImGui::SameLine();
 
-		ImGui::Checkbox("pause animation", (bool*)&pauseAnimation);
 
-		ImGui::Checkbox("view hypocycloid", (bool*)&viewHypocycloid);
-
-		ImGui::SameLine();
-
-		if (ImGui::Button("Apply scale to the polynomial")) {
+		if (ImGui::Button("apply scale & translation to points")) {
 			applyPolynomialScale = true;
 		}
 
@@ -180,7 +186,7 @@ void Program::drawUI() {
 			mousePosition->z = 0;
 		}
 
-		ImGui::DragFloat("polynomial point scale factor", (float*)&polynomialScale, 0.001f);
+		ImGui::DragFloat("polynomial point scale", (float*)&polynomialScale, 0.001f);
 
 		ImGui::DragFloat2("translate the model", (float*)&offset, 0.01f);
 
@@ -422,7 +428,6 @@ void Program::updatePolynomialPoints(){
 }
 // Main loop
 void Program::mainLoop() {
-
 	// createTestGeometryObject();
 	createCycloid();
 
