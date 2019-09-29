@@ -26,8 +26,6 @@ void RenderEngine::render(const std::vector<Geometry*>& objects, glm::mat4 view,
 		glm::mat4 modelView = view * o->modelMatrix;
 		glUniformMatrix4fv(glGetUniformLocation(mainProgram, "modelView"), 1, GL_FALSE, glm::value_ptr(modelView));
 		glUniformMatrix4fv(glGetUniformLocation(mainProgram, "ortho"), 1, GL_FALSE, glm::value_ptr(ortho));
-		// glUniform4fv(glGetUniformLocation(mainProgram, "color"), color.x, color.y, color.z, color.w);
-		std::cout << "color? " << color.x <<"," << color.y <<","<< color.z << ","<<color.w << std::endl;
 		glUniform4fv(glGetUniformLocation(mainProgram, "color"), 1, &color[0]);
 		
 

@@ -161,6 +161,10 @@ void Program::drawUI() {
 
 		ImGui::Checkbox("hide leading dot", (bool*)&hideDot);
 
+		ImGui::SameLine();
+
+		ImGui::Checkbox("pause animation", (bool*)&pauseAnimation);
+
 		ImGui::Checkbox("view hypocycloid", (bool*)&viewHypocycloid);
 
 		ImGui::SameLine();
@@ -196,7 +200,7 @@ void Program::updateCycloid() {
 	if(parametersChanged){
 		hypocycloid->verts.clear();
 	}
-	if (theta > (PI * 2 * cycles)) {
+	if (theta > (PI * 2 * cycles) || pauseAnimation) {
 		if(amount>0) {
 			resumeValue = amount;
 		}
@@ -206,6 +210,7 @@ void Program::updateCycloid() {
 		if (amount == 0) {
 			amount = resumeValue;
 		}
+
 	}
 	// draw the hypocycloid
 	for (int x = 0; x < amount; x++){

@@ -71,6 +71,8 @@ private:
 	bool hideDot = false;
 	bool enablePoints = false;
 
+	bool pauseAnimation = false;
+
 	bool viewHypocycloid = true;
 
 	float theta = 0;
