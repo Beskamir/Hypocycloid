@@ -95,6 +95,7 @@ void Program::drawUI() {
 	{
 		ImGui::Begin("UI Controls");
 		ImGui::ColorEdit3("clear color", (float*)&clear_color);
+		ImGui::ColorEdit4("line color", (float*)&lineColor);
 		ImGui::DragFloat("small circle radius", (float*)&innerRadius, 0.001f);
 		ImGui::DragFloat("large circle radius", (float*)&outerRadius, 0.001f);
 		ImGui::DragInt("number of cycles", (int*)&cycles);
@@ -429,6 +430,7 @@ void Program::mainLoop() {
 	// Our state
 	show_test_window = false;
 	clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
+	lineColor = ImVec4(1.0f, 1.0f, 0.0f, 1.00f);
 
 	while(!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
@@ -467,7 +469,7 @@ void Program::mainLoop() {
 		glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		renderEngine->render(geometryObjects, glm::mat4(1.f));
+		renderEngine->render(geometryObjects, glm::mat4(1.f), glm::vec4(lineColor.x,lineColor.y,lineColor.z,lineColor.w));
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		glfwSwapBuffers(window);

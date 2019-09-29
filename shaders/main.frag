@@ -1,13 +1,9 @@
 #version 430 core
 
-in VertexData{
-    vec2 mTexCoord;
-    vec4 mColor;
-} VertexIn;
+in vec4 fragColor;
 
-out vec4 colour;
+out vec4 outColor;
 
 void main(void) {    	
-	colour = VertexIn.mColor;
-	//colour = vec4(1.0, 0.0, 0.0, 1.0);
+	outColor = fragColor;
 }

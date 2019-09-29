@@ -93,4 +93,6 @@ private:
 	bool applyPolynomialScale = false;
 
 	float offset[2] = { 0, 0 };
+
+	ImVec4 lineColor;
 };

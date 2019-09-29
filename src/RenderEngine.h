@@ -17,7 +17,7 @@ class RenderEngine {
 public:
 	RenderEngine(GLFWwindow* window);
 
-	void render(const std::vector<Geometry*>& objects, glm::mat4 view);
+	void render(const std::vector<Geometry*>& objects, glm::mat4 view, glm::vec4 color);
 	void assignBuffers(Geometry& object);
 	void updateBuffers(Geometry& object);
 	void deleteBuffers(Geometry& object);
