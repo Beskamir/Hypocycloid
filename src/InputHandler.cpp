@@ -3,10 +3,12 @@
 RenderEngine* InputHandler::renderEngine;
 int InputHandler::mouseOldX;
 int InputHandler::mouseOldY;
+glm::vec3* InputHandler::mousePos;
 
 // Must be called before processing any GLFW events
-void InputHandler::setUp(RenderEngine* renderEngine) {
+void InputHandler::setUp(RenderEngine* renderEngine, glm::vec3* pos) {
 	InputHandler::renderEngine = renderEngine;
+	InputHandler::mousePos = pos;
 }
 
 // Callback for key presses
@@ -20,6 +22,12 @@ void InputHandler::key(GLFWwindow* window, int key, int scancode, int action, in
 
 // Callback for mouse button presses
 void InputHandler::mouse(GLFWwindow* window, int button, int action, int mods) {
+	if(action==GLFW_PRESS)	{
+		// std::cout << mouseOldX << ", " << mouseOldY << std::endl;
+		mousePos->x = mouseOldX;
+		mousePos->y = mouseOldY;
+		mousePos->z = 1.0f;
+	}
 }
 
 // Callback for mouse motion

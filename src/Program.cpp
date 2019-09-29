@@ -27,7 +27,10 @@ void Program::start() {
 	}
 	*/
 	renderEngine = new RenderEngine(window);
-	InputHandler::setUp(renderEngine);
+
+	mousePosition = new glm::vec3(0);
+
+	InputHandler::setUp(renderEngine, mousePosition);
 	mainLoop();
 }
 
@@ -113,6 +116,7 @@ void Program::drawUI() {
 			theta = 0;
 			thetaCi = 0;
 			thetaCo = 0;
+			enablePoints = false;
 		}
 
 		ImGui::SameLine();
@@ -130,6 +134,7 @@ void Program::drawUI() {
 			hideInnerCircle = false;
 			hideOuterCircle = false;
 			hideDot = false;
+			enablePoints = false;
 
 			theta = 0;
 			thetaCi = 0;
@@ -150,7 +155,19 @@ void Program::drawUI() {
 
 		ImGui::Checkbox("hide leading dot", (bool*)&hideDot);
 
-	
+		ImGui::Checkbox("view hypocycloid", (bool*)&viewHypocycloid);
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Apply scale to the polynomial")) {
+			applyPolynomialScale = true;
+		}
+
+		ImGui::SameLine();
+
+		ImGui::Checkbox("enable placing control points", (bool*)&enablePoints);
+
+		ImGui::DragFloat("polynomial point scale factor", (float*)&polynomialScale, 0.001f);
 
 		ImGui::End();
 	}
@@ -166,7 +183,6 @@ void Program::createCycloid() {
 void Program::updateCycloid() {
 	if(parametersChanged){
 		hypocycloid->verts.clear();
-		// parametersChanged = false;
 	}
 
 	// draw the hypocycloid
@@ -213,7 +229,7 @@ void Program::updateInnerCircle() {
 		return;
 	}
 
-	// draw the hypocycloid
+	// draw the inner circle
 	for (int x = 0; x < (PI * 2 * circleDetail) + 1; x++) {
 		thetaCi += (float) 1 / (float) circleDetail;
 		if (thetaCi > (PI * 2)) {
@@ -225,7 +241,7 @@ void Program::updateInnerCircle() {
 			0.f));
 	}
 
-	// scale or rotate the hypocycloid
+	// scale or rotate the inner circle
 	innerCircle->modelMatrix = glm::scale(glm::mat4(1.f), glm::vec3(scale));
 	innerCircle->modelMatrix *= glm::rotate(glm::mat4(1.f), glm::radians(rotation), glm::vec3(0, 0, 1.0f));
 
@@ -239,10 +255,9 @@ void Program::updateOuterCircle() {
 	}
 	if (parametersChanged) {
 		outerCircle->verts.clear();
-		// parametersChanged = false;
 	}
 
-	// draw the hypocycloid
+	// draw the outer circle
 	for (int x = 0; x < (PI * 2 * circleDetail) + 1; x++) {
 		thetaCo += (float) 1 / (float) circleDetail;
 		if (thetaCo > (PI * 2)) {
@@ -254,7 +269,7 @@ void Program::updateOuterCircle() {
 			0.f));
 	}
 
-	// scale or rotate the hypocycloid
+	// scale or rotate the outer circle
 	outerCircle->modelMatrix = glm::scale(glm::mat4(1.f), glm::vec3(scale));
 	outerCircle->modelMatrix *= glm::rotate(glm::mat4(1.f), glm::radians(rotation), glm::vec3(0, 0, 1.0f));
 
@@ -281,13 +296,90 @@ void Program::updateLastPoint() {
 		(radiusDif*sin(theta) - innerRadius * sin(ratio)),
 		0.f));
 
-	// scale or rotate the hypocycloid
+	// scale or rotate the line indicator point with everything else
 	lastPoint->modelMatrix = glm::scale(glm::mat4(1.f), glm::vec3(scale));
 	lastPoint->modelMatrix *= glm::rotate(glm::mat4(1.f), glm::radians(rotation), glm::vec3(0, 0, 1.0f));
 
 	renderEngine->updateBuffers(*lastPoint);
 }
 
+void Program::createPolynomial(){
+	polynomialPoints = new Geometry;
+	polynomialLine = new Geometry;
+	polynomialPoints->drawMode = GL_POINTS;
+	renderEngine->assignBuffers(*polynomialPoints);
+	renderEngine->assignBuffers(*polynomialLine);
+	updatePolynomialPoints();
+	updatePolynomialLines();
+	geometryObjects.push_back(polynomialPoints);
+	geometryObjects.push_back(polynomialLine);
+}
+
+//Keeps track of how many mouse clicks there were
+int pointCounter = 0;
+void Program::updatePolynomialLines() {
+
+	polynomialLine->verts.clear();
+
+	float polyLineStep = 0.0001;
+	float uValue = 0;
+	if(pointCounter>2)	{
+		while (uValue<=1){
+			glm::vec3 curveValues = polynomialPoints->verts[0] + polynomialPoints->verts[1] * glm::vec1(uValue) + polynomialPoints->verts[2] * glm::vec1(uValue * uValue);
+			polynomialLine->verts.push_back(curveValues);
+
+			// Update uValue
+			uValue+=polyLineStep;
+		}
+	}
+	polynomialLine->modelMatrix = glm::scale(glm::mat4(1.f), glm::vec3(scale));
+	polynomialLine->modelMatrix *= glm::rotate(glm::mat4(1.f), glm::radians(rotation), glm::vec3(0, 0, 1.0f));
+
+	renderEngine->updateBuffers(*polynomialLine);
+
+}
+
+void Program::updatePolynomialPoints(){
+	if (parametersChanged) {
+		polynomialPoints->verts.clear();
+		pointCounter = 0;
+	}
+	// std::cout << mousePosition->x << "," << mousePosition->y << "," << mousePosition->z << std::endl;
+	//check that a click has been done
+	int width, height;
+	if(mousePosition->z==1 && pointCounter<3 && enablePoints){
+		glfwGetWindowSize(window, &width, &height);
+		glm::vec2 mousePosFix = glm::vec2(
+			((mousePosition->x - (float)width/2)/((float)width/2))*10,
+			(((float)height/2 - mousePosition->y)/((float)height/2))*10
+		);
+		// std::cout << mousePosFix.x << "," << mousePosFix.y << std::endl;
+
+		// Add the point and a curve from that point
+		polynomialPoints->verts.push_back(glm::vec3(mousePosFix.x, mousePosFix.y, 0.f));
+		// polynomialLine->verts.push_back(glm::vec3(mousePosFix.x, mousePosFix.y, 0.f));
+
+		// Reset the click counter
+		mousePosition->z = 0;
+		pointCounter++;
+	}
+
+
+	if (pointCounter > 2 && applyPolynomialScale) {
+		for (int i = 0; i < pointCounter; i++) {
+			polynomialPoints->verts[i] *= polynomialScale;
+			// std::cout << polynomialPoints->verts[i][0] << ", " << polynomialPoints->verts[i][1] << ", "<<i << std::endl;
+		}
+		polynomialScale = 1;
+		applyPolynomialScale = false;
+	}
+
+	// scale or rotate the polynomial
+	polynomialPoints->modelMatrix = glm::scale(glm::mat4(1.f), glm::vec3(scale));
+	polynomialPoints->modelMatrix *= glm::rotate(glm::mat4(1.f), glm::radians(rotation), glm::vec3(0, 0, 1.0f));
+
+	renderEngine->updateBuffers(*polynomialPoints);
+}
 // Main loop
 void Program::mainLoop() {
 
@@ -298,6 +390,8 @@ void Program::mainLoop() {
 	createInnerCircle();
 	createLastPoint();
 
+	createPolynomial();
+
 	// Our state
 	show_test_window = false;
 	clear_color = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
@@ -305,11 +399,27 @@ void Program::mainLoop() {
 	while(!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 
-		updateCycloid();
-		updateInnerCircle();
-		updateOuterCircle();
-		updateLastPoint();
-		if(parametersChanged){
+		if(viewHypocycloid) {
+			updateCycloid();
+			updateInnerCircle();
+			updateOuterCircle();
+			updateLastPoint();
+			mousePosition->z = 0;
+		}
+		else {
+			lastPoint->verts.clear();
+			outerCircle->verts.clear();
+			innerCircle->verts.clear();
+			hypocycloid->verts.clear();
+
+			theta = 0;
+			thetaCi = 0;
+			thetaCo = 0;
+
+			updatePolynomialPoints();
+			updatePolynomialLines();
+		}
+		if (parametersChanged) {
 			parametersChanged = false;
 		}
 

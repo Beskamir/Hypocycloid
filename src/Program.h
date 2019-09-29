@@ -50,6 +50,10 @@ private:
 	void createLastPoint();
 	void updateLastPoint();
 
+
+	void createPolynomial();
+	void updatePolynomialPoints();
+	void updatePolynomialLines();
 	// PI constant since I'm too lazy to use a library when I can just copy paste
 	float PI = 3.14159265358979323846264338327950288;
 	
@@ -65,6 +69,9 @@ private:
 	bool hideInnerCircle = false;
 	bool hideOuterCircle = false;
 	bool hideDot = false;
+	bool enablePoints = false;
+
+	bool viewHypocycloid = true;
 
 	float theta = 0;
 	float thetaCi = 0;
@@ -77,4 +84,11 @@ private:
 	Geometry* innerCircle;
 	Geometry* outerCircle;
 	Geometry* lastPoint;
+	Geometry* polynomialPoints;
+	Geometry* polynomialLine;
+
+	glm::vec3 *mousePosition;
+
+	float polynomialScale = 1;
+	bool applyPolynomialScale;
 };

@@ -10,7 +10,7 @@
 class InputHandler {
 
 public:
-	static void setUp(RenderEngine* renderEngine);
+	static void setUp(RenderEngine* renderEngine, glm::vec3* pos);
 
 	static void key(GLFWwindow* window, int key, int scancode, int action, int mods);
 	static void mouse(GLFWwindow* window, int button, int action, int mods);
@@ -18,8 +18,10 @@ public:
 	static void scroll(GLFWwindow* window, double x, double y);
 	static void reshape(GLFWwindow* window, int width, int height);
 
+
 private:
 	static RenderEngine* renderEngine;
+	static glm::vec3* mousePos;
 
 	static int mouseOldX;
 	static int mouseOldY;
