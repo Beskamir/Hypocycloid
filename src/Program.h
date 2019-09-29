@@ -90,7 +90,7 @@ private:
 	glm::vec3 *mousePosition;
 
 	float polynomialScale = 1;
-	bool applyPolynomialScale;
+	bool applyPolynomialScale = false;
 
 	float offset[2] = { 0, 0 };
 };

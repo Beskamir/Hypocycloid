@@ -44,7 +44,7 @@ void Program::setupWindow() {
 	}
 
 	glfwWindowHint(GLFW_SAMPLES, 16);
-	window = glfwCreateWindow(1024, 1024, "CPSC 589 A1 - hypocycloids", NULL, NULL);
+	window = glfwCreateWindow(1024, 1024, "CPSC 589 A1 - hypocycloids & polynomial curve", NULL, NULL);
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(1); // V-sync on
 
@@ -190,17 +190,28 @@ void Program::createCycloid() {
 	geometryObjects.push_back(hypocycloid);
 }
 
+int resumeValue = 1;
 void Program::updateCycloid() {
 	if(parametersChanged){
 		hypocycloid->verts.clear();
 	}
-
+	if (theta > (PI * 2 * cycles)) {
+		if(amount>0) {
+			resumeValue = amount;
+		}
+		amount = 0;
+	}
+	else {
+		if (amount == 0) {
+			amount = resumeValue;
+		}
+	}
 	// draw the hypocycloid
 	for (int x = 0; x < amount; x++){
-		theta += (float) 1 / (float) step;
-		if (theta > (PI * 2 * cycles)) {
-			theta = 0;
+		if (theta < (PI * 2 * cycles)) {
+			theta += (float)1 / (float)step;
 		}
+
 		float radiusDif = (outerRadius - innerRadius);
 		float ratio = ((radiusDif / innerRadius) / innerRadius) * theta;
 		hypocycloid->verts.push_back(glm::vec3(
@@ -210,9 +221,10 @@ void Program::updateCycloid() {
 	}
 
 	// scale or rotate the hypocycloid
-	hypocycloid->modelMatrix = glm::scale(glm::mat4(1.f), glm::vec3(scale));
-	hypocycloid->modelMatrix *= glm::rotate(glm::mat4(1.f), glm::radians(rotation), glm::vec3(0, 0, 1.0f));
-	hypocycloid->modelMatrix += glm::translate(glm::mat4(1.f), glm::vec3(offset[0], offset[1], 0.0f));
+	hypocycloid->modelMatrix = glm::mat4(1.f);
+	hypocycloid->modelMatrix = glm::translate(hypocycloid->modelMatrix, glm::vec3(offset[0], offset[1], 0.0f));
+	hypocycloid->modelMatrix = glm::scale(hypocycloid->modelMatrix, glm::vec3(scale));
+	hypocycloid->modelMatrix = glm::rotate(hypocycloid->modelMatrix, glm::radians(rotation), glm::vec3(0, 0, 1.0f));
 
 	renderEngine->updateBuffers(*hypocycloid);
 }
@@ -253,9 +265,10 @@ void Program::updateInnerCircle() {
 	}
 
 	// scale or rotate the inner circle
-	innerCircle->modelMatrix = glm::scale(glm::mat4(1.f), glm::vec3(scale));
-	innerCircle->modelMatrix *= glm::rotate(glm::mat4(1.f), glm::radians(rotation), glm::vec3(0, 0, 1.0f));
-	innerCircle->modelMatrix += glm::translate(glm::mat4(1.f), glm::vec3(offset[0], offset[1], 0.0f));
+	innerCircle->modelMatrix = glm::mat4(1.f);
+	innerCircle->modelMatrix = glm::translate(innerCircle->modelMatrix, glm::vec3(offset[0], offset[1], 0.0f));
+	innerCircle->modelMatrix = glm::scale(innerCircle->modelMatrix, glm::vec3(scale));
+	innerCircle->modelMatrix = glm::rotate(innerCircle->modelMatrix, glm::radians(rotation), glm::vec3(0, 0, 1.0f));
 
 	renderEngine->updateBuffers(*innerCircle);
 }
@@ -280,11 +293,11 @@ void Program::updateOuterCircle() {
 			outerRadius*(sin(thetaCo)),
 			0.f));
 	}
-
 	// scale or rotate the outer circle
-	outerCircle->modelMatrix = glm::scale(glm::mat4(1.f), glm::vec3(scale));
-	outerCircle->modelMatrix *= glm::rotate(glm::mat4(1.f), glm::radians(rotation), glm::vec3(0, 0, 1.0f));
-	outerCircle->modelMatrix += glm::translate(glm::mat4(1.f), glm::vec3(offset[0], offset[1], 0.0f));
+	outerCircle->modelMatrix = glm::mat4(1.f);
+	outerCircle->modelMatrix = glm::translate(outerCircle->modelMatrix, glm::vec3(offset[0], offset[1], 0.0f));
+	outerCircle->modelMatrix = glm::scale(outerCircle->modelMatrix, glm::vec3(scale));
+	outerCircle->modelMatrix = glm::rotate(outerCircle->modelMatrix, glm::radians(rotation), glm::vec3(0, 0, 1.0f));
 
 	renderEngine->updateBuffers(*outerCircle);
 }
@@ -302,6 +315,7 @@ void Program::updateLastPoint() {
 	if(hideDot)	{
 		return;
 	}
+
 	float radiusDif = (outerRadius - innerRadius);
 	float ratio = ((radiusDif / innerRadius) / innerRadius) * theta;
 	lastPoint->verts.push_back(glm::vec3(
@@ -310,9 +324,10 @@ void Program::updateLastPoint() {
 		0.f));
 
 	// scale or rotate the line indicator point with everything else
-	lastPoint->modelMatrix = glm::scale(glm::mat4(1.f), glm::vec3(scale));
-	lastPoint->modelMatrix *= glm::rotate(glm::mat4(1.f), glm::radians(rotation), glm::vec3(0, 0, 1.0f));
-	lastPoint->modelMatrix += glm::translate(glm::mat4(1.f), glm::vec3(offset[0], offset[1], 0.0f));
+	lastPoint->modelMatrix = glm::mat4(1.f);
+	lastPoint->modelMatrix = glm::translate(lastPoint->modelMatrix, glm::vec3(offset[0], offset[1], 0.0f));
+	lastPoint->modelMatrix = glm::scale(lastPoint->modelMatrix, glm::vec3(scale));
+	lastPoint->modelMatrix = glm::rotate(lastPoint->modelMatrix, glm::radians(rotation), glm::vec3(0, 0, 1.0f));
 
 	renderEngine->updateBuffers(*lastPoint);
 }
@@ -346,8 +361,9 @@ void Program::updatePolynomialLines() {
 			uValue+=polyLineStep;
 		}
 	}
-	polynomialLine->modelMatrix = glm::scale(glm::mat4(1.f), glm::vec3(scale));
-	polynomialLine->modelMatrix *= glm::rotate(glm::mat4(1.f), glm::radians(rotation), glm::vec3(0, 0, 1.0f));
+	polynomialLine->modelMatrix = glm::mat4(1.f);
+	polynomialLine->modelMatrix = glm::scale(polynomialLine->modelMatrix, glm::vec3(scale));
+	polynomialLine->modelMatrix = glm::rotate(polynomialLine->modelMatrix, glm::radians(rotation), glm::vec3(0, 0, 1.0f));
 
 	renderEngine->updateBuffers(*polynomialLine);
 
@@ -392,8 +408,9 @@ void Program::updatePolynomialPoints(){
 	}
 
 	// scale or rotate the polynomial
-	polynomialPoints->modelMatrix = glm::scale(glm::mat4(1.f), glm::vec3(scale));
-	polynomialPoints->modelMatrix *= glm::rotate(glm::mat4(1.f), glm::radians(rotation), glm::vec3(0, 0, 1.0f));
+	polynomialPoints->modelMatrix = glm::mat4(1.f);
+	polynomialPoints->modelMatrix = glm::scale(polynomialPoints->modelMatrix, glm::vec3(scale));
+	polynomialPoints->modelMatrix = glm::rotate(polynomialPoints->modelMatrix, glm::radians(rotation), glm::vec3(0, 0, 1.0f));
 
 	renderEngine->updateBuffers(*polynomialPoints);
 }
